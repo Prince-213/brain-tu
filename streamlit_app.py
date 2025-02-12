@@ -14,7 +14,7 @@ import supervision as sv
 # Load a pretrained YOLO11n model
 
 
-st.title('Pancreatic Cancer Detection System')
+st.title('Brain tumor detection')
 
 uploaded_file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
 
@@ -32,22 +32,19 @@ if uploaded_file is not None:
       results = model(opencv_image)[0]
       detections = sv.Detections.from_ultralytics(results)
 
-      bounding_box_annotator = sv.BoxAnnotator()
-      label_annotator = sv.LabelAnnotator()
-        
-      names = ["Detected Tumor", "Detected Tumor", "Detected Tumor", "Detected Tumor", "Detected Tumor" ]
+      mask_annotator = sv.MaskAnnotator()
+      label_annotator = sv.LabelAnnotator(text_position=sv.Position.TOP_LEFT)
 
-      labels = [
-            names[class_id]
-            for class_id
-            in detections.class_id
-        ]
-
-      annotated_image = bounding_box_annotator.annotate(
-            scene=opencv_image, detections=detections)
+      corner_annotator = sv.BoxCornerAnnotator()
+      
+      annotated_image = mask_annotator.annotate(
+          scene=opencv_image, detections=detections)
       annotated_image = label_annotator.annotate(
-            scene=annotated_image, detections=detections, labels=labels)
-      output_path = './annotated_tumor.jpeg'
+          scene=annotated_image, detections=detections)
+      annotated_image = corner_annotator.annotate(
+        scene=annotated_image, detections=detections
+      )
+      output_path = './annotated_dog.jpeg'
       cv2.imwrite(output_path, annotated_image)
 
       print(f"Annotated image saved at {output_path}")
@@ -61,5 +58,5 @@ if uploaded_file is not None:
    
     if st.button("Run Detection", on_click=predict()):
     
-      st.write("The Detection Result")
-      st.image('./annotated_tumor.jpeg', channels="BGR", caption="Tumor Detected Image")
+      st.write("The Segmentation Result")
+      st.image('./annotated_dog.jpeg', channels="BGR", caption="Tumor Segmented Image")
